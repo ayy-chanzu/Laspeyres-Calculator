@@ -1,0 +1,182 @@
+import React, { useState, useMemo } from "react";
+
+// Laspeyres Price Index Calculator
+// Formula: I_L = (Σ Pn * Q0) / (Σ P0 * Q0) * 100
+
+export default function LaspeyresCalculator() {
+  const [rows, setRows] = useState([
+    { id: 1, name: "Item 1", Pn: "", P0: "", Q0: "" },
+  ]);
+
+  function addRow() {
+    const id = rows.length ? Math.max(...rows.map((r) => r.id)) + 1 : 1;
+    setRows([...rows, { id, name: `Item ${id}`, Pn: "", P0: "", Q0: "" }]);
+  }
+
+  function removeRow(id) {
+    setRows(rows.filter((r) => r.id !== id));
+  }
+
+  function updateRow(id, field, value) {
+    setRows(rows.map((r) => (r.id === id ? { ...r, [field]: value } : r)));
+  }
+
+  const computed = useMemo(() => {
+    let numerator = 0;
+    let denominator = 0;
+    rows.forEach((r) => {
+      const Pn = parseFloat(String(r.Pn).replace(/,/g, ""));
+      const P0 = parseFloat(String(r.P0).replace(/,/g, ""));
+      const Q0 = parseFloat(String(r.Q0).replace(/,/g, ""));
+      if (!Number.isFinite(Pn) || !Number.isFinite(P0) || !Number.isFinite(Q0)) return;
+      numerator += Pn * Q0;
+      denominator += P0 * Q0;
+    });
+
+    const index = denominator === 0 ? null : (numerator / denominator) * 100;
+    return {
+      numerator,
+      denominator,
+      index,
+    };
+  }, [rows]);
+
+  function formatNumber(x) {
+    if (x === null || x === undefined || !Number.isFinite(x)) return "—";
+    return x.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+
+  function reset() {
+    setRows([{ id: 1, name: "Item 1", Pn: "", P0: "", Q0: "" }]);
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-100 p-6 flex items-start justify-center">
+      <div className="w-full max-w-4xl">
+        <header className="mb-6">
+          <h1 className="text-2xl font-bold">Kalkulator Indeks Harga Laspeyres</h1>
+          <p className="mt-1 text-sm text-gray-600">Masukkan Pn (harga pada periode n), P0 (harga dasar), dan Q0 (kuantitas dasar) untuk setiap item. Rumus: I<sub>L</sub> = (Σ Pn × Q0) / (Σ P0 × Q0) × 100</p>
+        </header>
+
+        <div className="bg-white rounded-2xl shadow p-4">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-fixed">
+              <thead>
+                <tr className="text-left text-sm text-gray-500 border-b">
+                  <th className="w-40 p-2">Nama Item</th>
+                  <th className="w-36 p-2">Pn (Harga periode n)</th>
+                  <th className="w-36 p-2">P0 (Harga dasar)</th>
+                  <th className="w-36 p-2">Q0 (Kuantitas dasar)</th>
+                  <th className="p-2">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="align-top border-b">
+                    <td className="p-2">
+                      <input
+                        className="w-full rounded-md border p-2 text-sm"
+                        value={r.name}
+                        onChange={(e) => updateRow(r.id, "name", e.target.value)}
+                        aria-label={`Nama item ${r.id}`}
+                      />
+                    </td>
+
+                    <td className="p-2">
+                      <input
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        className="w-full rounded-md border p-2 text-sm"
+                        placeholder="contoh: 12000"
+                        value={r.Pn}
+                        onChange={(e) => updateRow(r.id, "Pn", e.target.value)}
+                      />
+                    </td>
+
+                    <td className="p-2">
+                      <input
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        className="w-full rounded-md border p-2 text-sm"
+                        placeholder="contoh: 10000"
+                        value={r.P0}
+                        onChange={(e) => updateRow(r.id, "P0", e.target.value)}
+                      />
+                    </td>
+
+                    <td className="p-2">
+                      <input
+                        inputMode="decimal"
+                        pattern="[0-9]*[.,]?[0-9]*"
+                        className="w-full rounded-md border p-2 text-sm"
+                        placeholder="contoh: 50"
+                        value={r.Q0}
+                        onChange={(e) => updateRow(r.id, "Q0", e.target.value)}
+                      />
+                    </td>
+
+                    <td className="p-2">
+                      <div className="flex gap-2">
+                        <button
+                          className="px-3 py-1 rounded-md border text-sm hover:bg-gray-100"
+                          onClick={() => removeRow(r.id)}
+                          aria-label={`Hapus baris ${r.id}`}
+                        >
+                          Hapus
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={addRow}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-teal-500 to-emerald-500 text-white shadow"
+            >
+              Tambah Baris
+            </button>
+            <button onClick={reset} className="px-4 py-2 rounded-lg border text-sm">
+              Reset
+            </button>
+            <div className="ml-auto text-sm text-gray-600">Baris: {rows.length}</div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-slate-100 rounded-lg">
+              <div className="text-xs text-gray-500">Σ Pn × Q0</div>
+              <div className="text-xl font-semibold">{formatNumber(computed.numerator)}</div>
+            </div>
+
+            <div className="p-4 bg-slate-100 rounded-lg">
+              <div className="text-xs text-gray-500">Σ P0 × Q0</div>
+              <div className="text-xl font-semibold">{formatNumber(computed.denominator)}</div>
+            </div>
+
+            <div className="p-4 bg-white rounded-lg border">
+              <div className="text-xs text-gray-500">Indeks Laspeyres (I<sub>L</sub>)</div>
+              <div className="text-2xl font-bold">
+                {computed.index === null ? "—" : `${computed.index.toFixed(2)} %`}
+              </div>
+              <div className="text-xs text-gray-500 mt-1">(Jika ΣP0×Q0 = 0, indeks tidak terdefinisi)</div>
+            </div>
+          </div>
+
+          <div className="mt-6 text-sm text-gray-700">
+            <strong>Petunjuk:</strong>
+            <ol className="list-decimal ml-5 mt-2">
+              <li>Isi setiap baris dengan nilai numerik untuk Pn, P0, dan Q0.</li>
+              <li>Gunakan titik atau koma sebagai pemisah desimal sesuai kebiasaan browser/keyboard Anda.</li>
+              <li>Indeks dihitung otomatis berdasarkan rumus: <code>I_L = (Σ Pn × Q0) / (Σ P0 × Q0) × 100</code>.</li>
+            </ol>
+          </div>
+        </div>
+
+        <footer className="mt-4 text-xs text-gray-500">Dibuat untuk perhitungan indeks Laspeyres. Jika mau, saya bisa menambahkan ekspor CSV atau contoh data.</footer>
+      </div>
+    </div>
+  );
+}
