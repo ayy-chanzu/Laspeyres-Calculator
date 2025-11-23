@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalkulator Indeks Harga Laspeyres</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f3f4f6; padding: 20px; }
+    h1 { font-size: 24px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 8px; border-bottom: 1px solid #ccc; }
+    input { width: 95%; padding: 6px; }
+    button { padding: 8px 12px; margin-top: 10px; cursor: pointer; }
+    .box { background: white; padding: 15px; border-radius: 10px; }
+    .result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Kalkulator Indeks Harga Laspeyres</h1>
+    <p>Rumus: I<sub>L</sub> = (Σ Pn × Q0) / (Σ P0 × Q0) × 100</p>
+
+    <table id="data-table">
+      <thead>
+        <tr>
+          <th>Nama Item</th>
+          <th>Pn</th>
+          <th>P0</th>
+          <th>Q0</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button onclick="addRow()" style="background:#0d9488;color:white;border:none;border-radius:6px;">Tambah Baris</button>
+    <button onclick="resetTable()">Reset</button>
+
+    <div class="result">
+      Σ Pn × Q0: <span id="num">-</span><br />
+      Σ P0 × Q0: <span id="den">-</span><br />
+      Indeks Laspeyres: <span id="index">-</span>
+    </div>
+  </div>
+
+  <script>
+    const tbody = document.querySelector('#data-table tbody');
+
+    function addRow() {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="text" placeholder="Item" /></td>
+        <td><input type="number" step="any" class="Pn" /></td>
+        <td><input type="number" step="any" class="P0" /></td>
+        <td><input type="number" step="any" class="Q0" /></td>
+        <td><button onclick="this.parentElement.parentElement.remove(); calculate()">Hapus</button></td>
+      `;
+      tbody.appendChild(row);
+      row.querySelectorAll('input').forEach(inp => inp.addEventListener('input', calculate));
+    }
+
+    function resetTable() {
+      tbody.innerHTML = '';
+      addRow();
+      calculate();
+    }
+
+    function calculate() {
+      let numerator = 0, denominator = 0;
+      document.querySelectorAll('#data-table tbody tr').forEach(row => {
+        const Pn = parseFloat(row.querySelector('.Pn').value) || 0;
+        const P0 = parseFloat(row.querySelector('.P0').value) || 0;
+        const Q0 = parseFloat(row.querySelector('.Q0').value) || 0;
+        numerator += Pn * Q0;
+        denominator += P0 * Q0;
+      });
+
+      document.getElementById('num').textContent = numerator.toFixed(2);
+      document.getElementById('den').textContent = denominator.toFixed(2);
+      document.getElementById('index').textContent = denominator === 0 ? '-' : (numerator / denominator * 100).toFixed(2) + '%';
+    }
+
+    // initial row
+    addRow();
+  </script>
+</body>
+</html>
